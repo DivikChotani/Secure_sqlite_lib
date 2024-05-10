@@ -46,7 +46,7 @@ class SQLite
         let obj = {}
         for(let i = 0; i<_lib.sqlite3_column_count(res.deref()); i++){
             let type =  _lib.sqlite3_column_type(res.deref(),i);
-            if(type = 3){
+            if(type == 3){
                obj[_lib.sqlite3_column_name(res.deref(), i)]= _lib.sqlite3_column_text(res.deref(), i);
                }
             if(type == 1){

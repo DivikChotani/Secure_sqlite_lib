@@ -39,8 +39,9 @@ class SQLite
   query(parameter) {
     const res = ref.alloc(sqlstatementPtrPtr);
     let rc = _lib.sqlite3_prepare_v2(this.db.deref(), parameter, -1, res, 0);
-    console.log(rc);
+    
     let returnVal = [];
+   
 
     while(_lib.sqlite3_step(res.deref())==100){
         let obj = {}
@@ -58,6 +59,7 @@ class SQLite
             }
             returnVal.push(obj)
         }
+
     return returnVal;    
 
     }

@@ -24,7 +24,10 @@ const _lib = ffi.Library('libsqlite3', {
   'sqlite3_column_name':['string', [sqlstatementPtr, 'int']],
   'sqlite3_column_count':['int',[sqlstatementPtr]],
   'sqlite3_column_int':['int',[sqlstatementPtr, 'int']],
-  'sqlite3_column_double':['double',[sqlstatementPtr, 'int']]
+  'sqlite3_column_double':['double',[sqlstatementPtr, 'int']],
+  'sqlite3_bind_double':['int', [sqlstatementPtr, 'int', 'double']],
+  'sqlite3_bind_int64':['int', [sqlstatementPtr, 'int', 'long long']],
+  'sqlite3_bind_text':['int',[sqlstatementPtr, 'int', 'string', 'int', 'long long']]
   
 });
  
@@ -36,12 +39,26 @@ class SQLite
   this.db = ref.alloc(sqlite3PtrPtr);
   const rc = _lib.sqlite3_open(filename, this.db);
   }
-  query(parameter) {
+  query(parameter, binding = []) {
     const res = ref.alloc(sqlstatementPtrPtr);
     let rc = _lib.sqlite3_prepare_v2(this.db.deref(), parameter, -1, res, 0);
     
     let returnVal = [];
-   
+    
+    for(let i = 0; i<binding.length; i++){
+        let type = typeof(binding[i]);
+        if(type == 'number'){
+            if(Number.isInteger(type)){
+                _lib.sqlite3_bind_int64(res.deref(), i+1, binding[i]);
+            }
+            else{
+                _lib.sqlite3_bind_double(res.deref(), i+1, binding[i]);
+            }
+        }
+        else if(type == 'string'){
+            _lib.sqlite3_bind_text(res.deref(), i+1, binding[i], binding[i].length, 0);
+        }
+    }
 
     while(_lib.sqlite3_step(res.deref())==100){
         let obj = {}
@@ -99,6 +116,10 @@ class SQLite
 const db = new SQLite();
 console.log(db.query('SELECT SQLITE_VERSION()'));
 console.log(db.query('CREATE TABLE test (id TEXT)'));
+console.log(db.query('CREATE TABLE test2 (id INT)'));
 console.log(db.query('INSERT INTO test (id) VALUES ("a")'));
+console.log(db.query('INSERT INTO test2 (id) VALUES (5)'));
 console.log(db.query('SELECT * FROM test'));
-
+console.log(db.query('SELECT * FROM test2'));
+console.log(db.query('SELECT * FROM test WHERE id=?', ["a"]));
+console.log(db.query('SELECT * FROM test2 WHERE id=?', [5]));
